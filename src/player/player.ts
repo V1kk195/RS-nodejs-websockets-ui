@@ -1,7 +1,12 @@
-import { Player, LoginResponse, PlayerDataRes } from "./types";
+import {
+  Player,
+  LoginResponse,
+  PlayerDataRes,
+  UpdateWinnersResponse,
+} from "./types";
 import { Command } from "../types";
 import { serializeData } from "../helpers";
-import { players } from "../db";
+import { players, winners } from "../db";
 
 export const loginPlayer = (data: Player): LoginResponse => {
   const foundPlayer = players.findIndex((item) => item.name === data.name);
@@ -47,6 +52,15 @@ export const loginPlayer = (data: Player): LoginResponse => {
       error: false,
       errorText: "",
     } as PlayerDataRes),
+    id: 0,
+  };
+};
+
+export const updateWinners = (): UpdateWinnersResponse => {
+  console.log(winners);
+  return {
+    type: Command.updWinners,
+    data: serializeData(winners),
     id: 0,
   };
 };

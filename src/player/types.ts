@@ -24,13 +24,13 @@ export type LoginResponse = {
   id: 0;
 };
 
-export type UpdateWinner = {
+export type Winner = {
+  name: string;
+  wins: number;
+};
+
+export type UpdateWinnersResponse = {
   type: Command.updWinners;
-  data: [
-    {
-      name: string;
-      wins: number;
-    },
-  ];
+  data: string; // Winner[]
   id: 0;
 };

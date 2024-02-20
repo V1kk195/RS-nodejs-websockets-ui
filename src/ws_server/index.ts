@@ -1,34 +1,65 @@
-import { RawData, WebSocketServer } from "ws";
+import { RawData, WebSocketServer, WebSocket } from "ws";
 import { deserializeData, serializeData } from "../helpers";
-import { loginPlayer } from "../player";
+import { loginPlayer, updateWinners } from "../player";
+import { Command } from "../types";
+import { createRoom, updateRoom } from "../gameRoom/createRoom";
+import { IncomingMessage } from "node:http";
+
+let index = 0;
+const websockets = new Map();
+
+const sendTo =
+  (clientId: number) =>
+  (data: any): void => {
+    if (
+      websockets.get(clientId) &&
+      websockets.get(clientId).readyState === WebSocket.OPEN
+    )
+      websockets.get(clientId).send(data);
+  };
 
 export const initiateWsServer = (port: number): void => {
   const wss = new WebSocketServer({
     port,
   });
 
-  wss.on("connection", function connection(ws, req) {
-    console.log(`New client connected on `, req.socket.address());
+  wss.on(
+    "connection",
+    function connection(ws: WebSocket, req: IncomingMessage) {
+      index++;
+      const clientId = index;
+      websockets.set(clientId, ws);
+      console.log(`New client ${clientId} connected on `, req.socket.address());
+      const send = sendTo(clientId);
 
-    ws.on("error", console.error);
+      ws.on("error", console.error);
 
-    ws.on("message", function message(data: RawData, isBinary) {
-      const deserializedData = deserializeData(data);
-      const content = deserializeData(deserializedData.data);
+      ws.on("message", function message(data: RawData) {
+        const deserializedData = deserializeData(data);
+        const content = deserializeData(deserializedData.data);
+        const messageType = deserializedData.type;
 
-      if (deserializedData.type === "reg") {
-        ws.send(serializeData(loginPlayer(content)));
-      }
-
-      wss.clients.forEach(function each(client) {
-        if (client !== ws && client.readyState === WebSocket.OPEN) {
-          client.send(data, { binary: isBinary });
+        if (messageType === Command.reg) {
+          send(serializeData(loginPlayer(content)));
+          send(serializeData(updateRoom()));
+          send(serializeData(updateWinners()));
         }
-      });
-    });
 
-    ws.on("close", () => {
-      console.log("Client disconnected");
-    });
-  });
+        if (messageType === Command.createRoom) {
+          createRoom();
+        }
+
+        // wss.clients.forEach(function each(client) {
+        //   if (client !== ws && client.readyState === WebSocket.OPEN) {
+        //     client.send(data, { binary: isBinary });
+        //   }
+        // });
+      });
+
+      ws.on("close", () => {
+        websockets.delete(clientId);
+        console.log(`Client ${clientId} disconnected`);
+      });
+    },
+  );
 };

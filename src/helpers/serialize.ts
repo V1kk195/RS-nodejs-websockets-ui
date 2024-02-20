@@ -5,5 +5,6 @@ export const serializeData = (data: any) => {
 };
 
 export const deserializeData = (data: RawData) => {
-  return JSON.parse(data.toString());
+  const stringData = data.toString();
+  return stringData ? JSON.parse(stringData) : undefined;
 };
