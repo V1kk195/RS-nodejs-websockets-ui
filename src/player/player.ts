@@ -8,19 +8,17 @@ import { Command } from "../types";
 import { serializeData } from "../helpers";
 import { players, winners } from "../db";
 
-export const loginPlayer = (data: Player): LoginResponse => {
-  const foundPlayer = players.findIndex((item) => item.name === data.name);
+export const loginPlayer = (data: Player, clientId: number): LoginResponse => {
+  const foundPlayer = players.get(clientId);
   console.log(players);
 
-  let newPlayerIndex;
-
-  if (foundPlayer > -1) {
-    if (players[foundPlayer].password !== data.password) {
+  if (foundPlayer) {
+    if (foundPlayer.password !== data.password) {
       return {
         type: Command.reg,
         data: serializeData({
-          name: data.name,
-          index: foundPlayer,
+          name: foundPlayer.name,
+          index: clientId,
           error: true,
           errorText: "Incorrect password for user",
         } as PlayerDataRes),
@@ -30,8 +28,8 @@ export const loginPlayer = (data: Player): LoginResponse => {
       return {
         type: Command.reg,
         data: serializeData({
-          name: data.name,
-          index: foundPlayer,
+          name: foundPlayer.name,
+          index: clientId,
           error: false,
           errorText: "",
         } as PlayerDataRes),
@@ -39,7 +37,7 @@ export const loginPlayer = (data: Player): LoginResponse => {
       };
     }
   } else {
-    newPlayerIndex = players.push(data);
+    players.set(clientId, data);
   }
 
   console.log(players);
@@ -48,7 +46,7 @@ export const loginPlayer = (data: Player): LoginResponse => {
     type: Command.reg,
     data: serializeData({
       name: data.name,
-      index: newPlayerIndex,
+      index: clientId,
       error: false,
       errorText: "",
     } as PlayerDataRes),

@@ -40,13 +40,13 @@ export const initiateWsServer = (port: number): void => {
         const messageType = deserializedData.type;
 
         if (messageType === Command.reg) {
-          send(serializeData(loginPlayer(content)));
+          send(serializeData(loginPlayer(content, clientId)));
           send(serializeData(updateRoom()));
           send(serializeData(updateWinners()));
         }
 
         if (messageType === Command.createRoom) {
-          createRoom();
+          send(serializeData(createRoom(clientId)));
         }
 
         // wss.clients.forEach(function each(client) {
