@@ -6,11 +6,13 @@ export type CreateGameRoomReq = {
   id: 0;
 };
 
+export type AddPlayerToRoomRequestData = {
+  indexRoom: number;
+};
+
 export type AddPlayerToRoomRequest = {
   type: Command.addUserToRoom;
-  data: {
-    indexRoom: number;
-  };
+  data: AddPlayerToRoomRequestData;
   id: 0;
 };
 
@@ -21,7 +23,7 @@ export type Game = {
 
 export type AddPlayerToRoomResponse = {
   type: Command.createGame; //send for both players in the room
-  data: Game;
+  data: string; // Game
   id: 0;
 };
 
