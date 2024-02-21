@@ -24,13 +24,15 @@ export type AddShipsRequest = {
   id: 0;
 };
 
+export type StartGameResponseData = {
+  ships: Ship[];
+  currentPlayerIndex: number /* id of the player in the current game session, who have sent his ships */;
+};
+
 // Start game (only after server receives both player's ships positions)
 export type StartGameResponse = {
   type: Command.startGame;
-  data: {
-    ships: Ship[];
-    currentPlayerIndex: number /* id of the player in the current game session, who have sent his ships */;
-  };
+  data: string; // StartGameResponseData
   id: 0;
 };
 
@@ -84,4 +86,9 @@ export type FinishGameResponse = {
     winPlayer: number /* id of the player in the current game session */;
   };
   id: 0;
+};
+
+export type GameBoard = {
+  gameId: number;
+  players: Record<number, Ship[]>; // playerId: Ship
 };
