@@ -4,7 +4,7 @@ import { loginPlayer, updateWinners } from "../player";
 import { Command } from "../types";
 import { addUserToRoom, createRoom, updateRoom } from "../gameRoom/room";
 import { IncomingMessage } from "node:http";
-import { addShips } from "../game/game";
+import { addShips, attack } from "../game/game";
 
 type WebsocketWithId = WebSocket & { id: number };
 
@@ -80,6 +80,9 @@ export const initiateWsServer = (port: number): void => {
               });
             }
           });
+        }
+        if (messageType === Command.attack) {
+          send(serializeData(attack(content)));
         }
       });
 

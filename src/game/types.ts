@@ -47,10 +47,12 @@ export type AttackRequest = {
   id: 0;
 };
 
+export type ShotStatus = "miss" | "killed" | "shot";
+
 export type AttackResponseData = {
   position: Position;
   currentPlayer: number /* id of the player in the current game session */;
-  status: "miss" | "killed" | "shot";
+  status: ShotStatus;
 };
 
 // Attack feedback (should be sent after every shot, miss and after kill sent miss for all cells around ship too)
