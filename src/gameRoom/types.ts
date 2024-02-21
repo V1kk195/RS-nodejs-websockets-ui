@@ -29,16 +29,21 @@ export type AddPlayerToRoomResponse = {
 
 export type Room = {
   roomId: number;
-  roomUsers: [
-    {
-      name: string;
-      index: number;
-    },
-  ];
+  roomUsers: {
+    name: string;
+    index: number;
+  }[];
 };
 
 export type UpdateRoomStateResponse = {
   type: Command.updateRoom;
   data: string; // Room[]
   id: 0;
+};
+
+export type GameRoom = Room & {
+  game: {
+    gameId: number;
+    players: number[];
+  };
 };

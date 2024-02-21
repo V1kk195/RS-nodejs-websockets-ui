@@ -5,6 +5,8 @@ import { Command } from "../types";
 import { addUserToRoom, createRoom, updateRoom } from "../gameRoom/room";
 import { IncomingMessage } from "node:http";
 
+type WebsocketWithId = WebSocket & { id: number };
+
 let index = 0;
 const websockets = new Map();
 
@@ -18,15 +20,14 @@ const sendTo =
       websockets.get(clientId).send(data);
   };
 
-const getSendToAll =
-  (wss: WebSocketServer, ws: WebSocket, isBinary: boolean) =>
-  (data: string) => {
-    wss.clients.forEach(function each(client) {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(data, { binary: isBinary });
-      }
-    });
-  };
+// const getSendToAll =
+//   (wss: WebSocketServer, isBinary: boolean) => (data: string) => {
+//     wss.clients.forEach(function each(client) {
+//       if (client.readyState === WebSocket.OPEN) {
+//         client.send(data, { binary: isBinary });
+//       }
+//     });
+//   };
 
 export const initiateWsServer = (port: number): void => {
   const wss = new WebSocketServer({
@@ -35,9 +36,10 @@ export const initiateWsServer = (port: number): void => {
 
   wss.on(
     "connection",
-    function connection(ws: WebSocket, req: IncomingMessage) {
+    function connection(ws: WebsocketWithId, req: IncomingMessage) {
       index++;
       const clientId = index;
+      ws.id = clientId;
       websockets.set(clientId, ws);
       console.log(`New client ${clientId} connected on `, req.socket.address());
       const send = sendTo(clientId);
@@ -45,7 +47,6 @@ export const initiateWsServer = (port: number): void => {
       ws.on("error", console.error);
 
       ws.on("message", function message(data: RawData, isBinary: boolean) {
-        const sendToAll = getSendToAll(wss, ws, isBinary);
         const deserializedData = deserializeData(data);
         const content = deserializeData(deserializedData.data);
         const messageType = deserializedData.type;
@@ -61,7 +62,13 @@ export const initiateWsServer = (port: number): void => {
         }
 
         if (messageType === Command.addUserToRoom) {
-          sendToAll(serializeData(addUserToRoom(content, clientId)));
+          (wss.clients as Set<WebsocketWithId>).forEach(function each(client) {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(serializeData(addUserToRoom(content, client.id)), {
+                binary: isBinary,
+              });
+            }
+          });
         }
       });
 

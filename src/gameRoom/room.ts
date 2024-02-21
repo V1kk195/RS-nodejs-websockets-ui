@@ -2,6 +2,7 @@ import {
   AddPlayerToRoomRequestData,
   AddPlayerToRoomResponse,
   Game,
+  GameRoom,
   Room,
   UpdateRoomStateResponse,
 } from "./types";
@@ -27,7 +28,7 @@ export const createRoom = (clientId: number): UpdateRoomStateResponse => {
   const currentPlayer = getCurrentPlayer(clientId);
   console.log(rooms);
 
-  const room: Room = {
+  const room: GameRoom = {
     roomId: rooms.length + 1,
     roomUsers: [
       {
@@ -35,6 +36,10 @@ export const createRoom = (clientId: number): UpdateRoomStateResponse => {
         index: clientId,
       },
     ],
+    game: {
+      gameId: 0,
+      players: [],
+    },
   };
   rooms.push(room);
   console.log(rooms);
@@ -46,20 +51,28 @@ export const addUserToRoom = (
   { indexRoom }: AddPlayerToRoomRequestData,
   clientId: number,
 ): AddPlayerToRoomResponse | string => {
-  const room = rooms.find((item) => item.roomId === indexRoom);
-  console.log(room);
+  const room = rooms.find((item) => item.roomId === indexRoom)!;
+  console.log("add user", room);
 
-  if (room && room.roomUsers.find((item) => item.index === clientId)) {
-    return "You're already in this room";
+  // const isUserInRoom =
+  //   room && room.roomUsers.find((item) => item.index === clientId);
+  //
+  // if (isUserInRoom && room?.roomUsers.length < 2) {
+  //   return "You're already in this room";
+  // }
+
+  if (room.game.players.length > 1) {
+    return "Maximum players in the room";
   }
 
-  const newGame: Game = {
-    idGame: games.length + 1,
-    idPlayer: clientId,
-  };
-  games.push(newGame);
+  room.game.gameId = room.game.gameId || 1;
+  room.game.players.push(clientId);
   console.log({ games });
 
+  const newGame: Game = {
+    idGame: room.game.gameId,
+    idPlayer: clientId,
+  };
   rooms.filter((item) => item.roomId !== indexRoom);
 
   return {
