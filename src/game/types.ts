@@ -93,9 +93,7 @@ export type TurnResponse = {
 
 export type FinishGameResponse = {
   type: Command.finish;
-  data: {
-    winPlayer: number /* id of the player in the current game session */;
-  };
+  data: string; // { winPlayer: number /* id of the player in the current game session */;};
   id: 0;
 };
 

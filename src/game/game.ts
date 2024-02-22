@@ -3,6 +3,8 @@ import {
   AttackRequestData,
   AttackResponse,
   AttackResponseData,
+  FinishGameResponse,
+  GameBoard,
   Ship,
   ShipTypeLength,
   ShotStatus,
@@ -11,7 +13,7 @@ import {
   TurnResponse,
   TurnResponseData,
 } from "./types";
-import { games, turn } from "../db";
+import { games, players, turn, winners } from "../db";
 import { Command } from "../types";
 import { getRival, serializeData } from "../helpers";
 import { WebSocket } from "ws";
@@ -191,7 +193,8 @@ export const sendTurn = (
   clientId: number,
   gameId: number,
 ): void => {
-  const randomTurn = Math.random() ? clientId : getRival(gameId, clientId);
+  const randomTurn =
+    Math.random() > 0.5 ? clientId : getRival(gameId, clientId);
 
   turn.playerId = turn.playerId ? turn.playerId : randomTurn;
 
@@ -202,4 +205,22 @@ export const sendTurn = (
   };
 
   ws.send(serializeData(res));
+};
+
+export const finishGame = (winner: number): FinishGameResponse => {
+  const winnerName = players.get(winner)?.name || "";
+  const existingWinner = winners.find((item) => item.name === winnerName);
+  if (existingWinner) {
+    existingWinner.wins++;
+  } else {
+    winners.push({ wins: 1, name: winnerName });
+  }
+
+  return {
+    type: Command.finish,
+    data: serializeData({
+      winPlayer: winner /* id of the player in the current game session */,
+    }),
+    id: 0,
+  };
 };

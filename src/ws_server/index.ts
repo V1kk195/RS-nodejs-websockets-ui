@@ -1,10 +1,10 @@
 import { RawData, WebSocketServer, WebSocket } from "ws";
-import { deserializeData, serializeData } from "../helpers";
+import { deserializeData, getWinner, serializeData } from "../helpers";
 import { loginPlayer, updateWinners } from "../player";
 import { Command } from "../types";
 import { addUserToRoom, createRoom, updateRoom } from "../gameRoom/room";
 import { IncomingMessage } from "node:http";
-import { addShips, attack, sendTurn } from "../game/game";
+import { addShips, attack, finishGame, sendTurn } from "../game/game";
 import { AddShipsRequestData, AttackRequestData } from "../game";
 
 type WebsocketWithId = WebSocket & { id: number };
@@ -95,13 +95,23 @@ export const initiateWsServer = (port: number): void => {
         if (messageType === Command.attack) {
           send(serializeData(attack(content, send)));
 
+          const winner = getWinner(
+            (content as AttackRequestData).gameId,
+            clientId,
+          );
+
           (wss.clients as Set<WebsocketWithId>).forEach(function each(client) {
             if (client.readyState === WebSocket.OPEN) {
-              sendTurn(
-                client,
-                client.id,
-                (content as AttackRequestData).gameId,
-              );
+              if (winner) {
+                client.send(serializeData(finishGame(winner)));
+                client.send(serializeData(updateWinners()));
+              } else {
+                sendTurn(
+                  client,
+                  client.id,
+                  (content as AttackRequestData).gameId,
+                );
+              }
             }
           });
         }
