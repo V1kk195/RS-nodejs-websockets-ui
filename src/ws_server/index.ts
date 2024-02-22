@@ -4,7 +4,8 @@ import { loginPlayer, updateWinners } from "../player";
 import { Command } from "../types";
 import { addUserToRoom, createRoom, updateRoom } from "../gameRoom/room";
 import { IncomingMessage } from "node:http";
-import { addShips, attack } from "../game/game";
+import { addShips, attack, sendTurn } from "../game/game";
+import { AddShipsRequestData, AttackRequestData } from "../game";
 
 type WebsocketWithId = WebSocket & { id: number };
 
@@ -75,14 +76,34 @@ export const initiateWsServer = (port: number): void => {
         if (messageType === Command.addShips) {
           (wss.clients as Set<WebsocketWithId>).forEach(function each(client) {
             if (client.readyState === WebSocket.OPEN) {
-              client.send(serializeData(addShips(content, client.id)), {
+              const data = addShips(content, client.id);
+              client.send(serializeData(data), {
                 binary: isBinary,
               });
+
+              if (data) {
+                sendTurn(
+                  client,
+                  client.id,
+                  (content as AddShipsRequestData).gameId,
+                );
+              }
             }
           });
         }
+
         if (messageType === Command.attack) {
           send(serializeData(attack(content)));
+
+          (wss.clients as Set<WebsocketWithId>).forEach(function each(client) {
+            if (client.readyState === WebSocket.OPEN) {
+              sendTurn(
+                client,
+                client.id,
+                (content as AttackRequestData).gameId,
+              );
+            }
+          });
         }
       });
 

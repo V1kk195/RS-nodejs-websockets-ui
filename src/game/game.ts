@@ -7,10 +7,13 @@ import {
   ShotStatus,
   StartGameResponse,
   StartGameResponseData,
+  TurnResponse,
+  TurnResponseData,
 } from "./types";
-import { games } from "../db";
+import { games, turn } from "../db";
 import { Command } from "../types";
 import { getRival, serializeData } from "../helpers";
+import { WebSocket } from "ws";
 
 export const addShips = (
   { indexPlayer, gameId, ships }: AddShipsRequestData,
@@ -52,6 +55,7 @@ export const attack = (data: AttackRequestData): AttackResponse => {
   const game = games.get(data.gameId)!;
   const rivalId = getRival(data.gameId, data.indexPlayer);
   let status: ShotStatus = "miss";
+  turn.playerId = rivalId;
 
   console.log("rival", game.players[rivalId]);
 
@@ -64,9 +68,11 @@ export const attack = (data: AttackRequestData): AttackResponse => {
       if (ship.length === 1 && isShot) {
         status = "killed";
         updatedShip = { ...ship, length: ship.length - 1 };
+        turn.playerId = data.indexPlayer;
       } else if (isShot) {
         status = "shot";
         updatedShip = { ...ship, length: ship.length - 1 };
+        turn.playerId = data.indexPlayer;
       }
 
       return updatedShip;
@@ -84,4 +90,28 @@ export const attack = (data: AttackRequestData): AttackResponse => {
     data: serializeData(responseData),
     id: 0,
   };
+};
+
+export const sendTurn = (
+  ws: WebSocket,
+  clientId: number,
+  gameId: number,
+): void => {
+  if (turn.playerId && turn.playerId !== clientId) {
+    return;
+  }
+
+  const randomTurn = Math.random() ? clientId : getRival(gameId, clientId);
+
+  turn.playerId = turn.playerId ? turn.playerId : randomTurn;
+
+  console.log({ clientId });
+  console.log({ currentPlayer: turn.playerId });
+  const res: TurnResponse = {
+    type: Command.turn,
+    data: serializeData({ currentPlayer: turn.playerId } as TurnResponseData),
+    id: 0,
+  };
+
+  ws.send(serializeData(res));
 };

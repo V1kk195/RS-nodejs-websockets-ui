@@ -73,12 +73,14 @@ export type RandomAttackRequest = {
   id: 0;
 };
 
+export type TurnResponseData = {
+  currentPlayer: number /* id of the player in the current game session */;
+};
+
 // Info about player's turn (send after game start and every attack, miss or kill result)
 export type TurnResponse = {
   type: Command.turn;
-  data: {
-    currentPlayer: number /* id of the player in the current game session */;
-  };
+  data: string; // TurnResponseData
   id: 0;
 };
 

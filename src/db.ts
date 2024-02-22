@@ -8,4 +8,8 @@ export const rooms: GameRoom[] = [];
 
 export const games: Map<number, GameBoard> = new Map();
 
+export const turn: Record<string, number | undefined> = {
+  playerId: undefined,
+};
+
 export const winners: Winner[] = [];
