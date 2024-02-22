@@ -93,7 +93,21 @@ export const initiateWsServer = (port: number): void => {
         }
 
         if (messageType === Command.attack) {
-          send(serializeData(attack(content)));
+          send(serializeData(attack(content, send)));
+
+          (wss.clients as Set<WebsocketWithId>).forEach(function each(client) {
+            if (client.readyState === WebSocket.OPEN) {
+              sendTurn(
+                client,
+                client.id,
+                (content as AttackRequestData).gameId,
+              );
+            }
+          });
+        }
+
+        if (messageType === Command.randomAttack) {
+          console.log("random attack");
 
           (wss.clients as Set<WebsocketWithId>).forEach(function each(client) {
             if (client.readyState === WebSocket.OPEN) {

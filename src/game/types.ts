@@ -1,6 +1,13 @@
 import { Command } from "../types";
 
-type Position = {
+export enum ShipTypeLength {
+  small = 1,
+  medium,
+  large,
+  huge,
+}
+
+export type Position = {
   x: number;
   y: number;
 };
